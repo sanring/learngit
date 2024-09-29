@@ -1,0 +1,162 @@
+git status 显示什么？
+当你执行 git status 时，它会告诉你：
+
+哪些文件被修改了：显示工作区中被修改但还没有放到暂存区的文件。
+哪些文件被添加到暂存区：显示已经添加到暂存区但还没有提交的文件。;(use "git restore --staged <file>..." to unstage)
+哪些文件没有被跟踪：显示工作区中 Git 不知道的文件。
+当前所在分支：显示你当前在哪个分支上工作。
+
+Git管理的文件分为：工作区，版本库，版本库又分为暂存区stage和暂存区分支master(仓库)
+
+工作区>>>>暂存区>>>>仓库
+
+git add把文件从工作区>>>>暂存区，git commit把文件从暂存区>>>>仓库，
+
+ git diff查看工作区和暂存区共有文件的差异，   例1  如：我新建了一个名为“learn”的文件 输入了一些内容并保存，
+; 这时使用git diff 时，它没有任何回复，
+; 而
+; 当我修改readme.txt文件内容在文段末尾键入一个回车，并使用该命令时，它有了回复
+diff --git a/readme.txt b/readme.txt
+index 99e0e11..8443d23 100644
+--- a/readme.txt
++++ b/readme.txt
+@@ -1,2 +1,2 @@
+ Git is a distributed version control system.
+-Git is free software distributed under the GPL.
+\ No newline at end of file
++Git is free software distributed under the GPL.
+; 可以看出修改的内容，综上所述，git diff 只能查看工作区和暂存区（cached）共有文件的修改，工作区有的文件，暂存区没有，
+; 在添加或者修改该文件时，命令不会有任何提示，
+; 除非git add把文件从工作区添加到暂存区，这个时候再在工作区修改这个刚刚添加的文件内容时 diff 有了提示回复。
+
+git diff --cached查看暂存区和仓库差异，
+;1)回到你的问题：如果暂存区是空的，git diff 如何查看修改文件后工作区与暂存区的区别？
+; 即使暂存区“看似”是空的，实际上它默认和最新提交一致。所以：
+; 当你没有暂存任何新的改动时，暂存区会和最新的提交保持同步。
+; 当你修改文件但没有暂存 (git add) 时，git diff 比较的其实是工作区和最新提交（通过暂存区）的区别。
+; 例2
+; 如：我新建了一个名为“readme.txt”的文件里面的内容行是1（git基于行定位修改内容）当我add并且commit后暂存区“为空”。此时暂存区和最新提交区（也就是仓库）的内容是同步的，两者之间没有差异。
+
+;2)更详细的解释：
+;   提交后的状态：
+; 提交 (git commit) 完成后，暂存区被清空，暂存区的内容与最新的提交 (HEAD) 相同。
+; 此时，暂存区和最新提交的内容是同步的，两者之间没有差异。
+; 当你修改文件后：
+; 修改文件后，你还没有使用 git add，此时文件的改动在工作区，暂存区依然和最新提交的内容一致（因为没有新的内容被暂存）。
+; 运行 git diff 时，它显示的是工作区和暂存区的差异，而此时的暂存区内容等同于最新提交。
+
+; 3）No newline at end of file
+; 一 问题发生
+; 在使用git命令git diff时，内容的末尾出现了“\ No newline at end of file”，即在文件的末尾没有文件换行符。
+; 二 问题分析
+; 　　文件的末尾没有文件换行符，似乎没有什么问题。但是仔细思考，就会发现问题所在。文本文件内容的修改是基于行定位的，也就是说对于某行添加或者删除了若干字符，git无法定位到这些字符的改动。针对此行来说，前后内容变化了，git理解为先删除修改前的此行后添加修改后的此行。
+
+; 　　于是，问题产生了。由于行的末尾没有换行符，如果我们想在新的一行上添加内容，首先要输入换行符。原来没有换行符，现在添加了换行符，那么这一行的内容就发生了改变，就会先删除原来没有换行符的“行”，添加有换行符的行。
+; 内容上并不影响，但是不符合逻辑。
+
+; 因此建议：在编辑文件时（尤其是Windows系统上），在文件末尾的行上手动添加换行符。https://blog.csdn.net/gao_zhennan/article/details/120217246
+
+git diff HEAD 查看工作区和仓库的差异，
+
+git add的反向命令git checkout，撤销工作区修改，即把暂存区最新版本转移到工作区，
+
+git commit的反向命令git reset HEAD，就是把仓库最新版本转移到暂存区。
+
+#不知道我分析的对不对。  ---来自用户九只蜗牛Leo @ 2019/12/2 11:10:47的评论  记得加换行符！！！
+ cat 命令的含义
+; 在 Linux/Unix 系统中，cat 命令是一个非常常用的命令行工具，它的主要作用是 连接文件并打印到标准输出。
+; 简单来说，就是把一个或多个文件的内容显示在终端上。
+
+
+ git reset 
+; git reset 命令可以通过 --soft 和 --mixed 选项来控制重置的行为，这两者与 --hard 的区别在于对 暂存区（staging area） 和 工作区（working directory） 的处理方式不同。
+
+; 1. git reset --soft
+ 作用：--soft 选项只会重置当前分支的指针（HEAD），不会改变暂存区和工作区的内容。
+ 详细效果：
+; HEAD 指针会重置到指定的提交。
+; 暂存区保持不变，之前的暂存文件依然处于暂存状态。
+; 工作区也保持不变，未提交的更改依然存在。
+
+ 总结：使用 --soft 后，所有的文件改动（无论是已暂存还是未暂存）都依然保留，只是 HEAD 被移动到了指定的提交。它适用于想要回滚提交，但保留改动以便稍后重新提交的情况。
+; 暂存区有文件，不会覆文件，工作区新修改的内容保留
+; 暂存区没有文件，commitB回到暂存区，工作区新修改的内容不变。
+; 就是看reset回退的地方（工作区，暂存区）内有没有已经存在（或修改）的文件，有就不会覆盖，没有就会回退到该地方，适用于--soft/--mixed。
+ 2. git reset --mixed（默认选项）
+ 作用：--mixed 是 git reset 的默认选项。它会重置当前分支的指针（HEAD），并且清空暂存区，但不会影响工作区的内容。
+ 详细效果：
+; HEAD 指针会重置到指定的提交。
+; 暂存区会被清空，之前已暂存的更改会被移出暂存区，但文件本身不会丢失。
+; 工作区保持不变，未提交的更改依然存在。
+; 总结：使用 --mixed 后，改动文件仍然保留在工作区中，但会从暂存区中移除。它适用于你想要修改上次提交的内容并重新暂存或修改文件的情况。
+; 3. git reset --hard HEAD^：
+ 效果：彻底撤销提交，并丢弃所有改动，恢复到 Commit A 的状态。
+
+; Commit B 会被撤销。
+; file1.txt 的内容会恢复到 Commit A 的状态，所有未提交的修改都会被丢弃。
+
+ 结果：
+; Git 历史回到 Commit A，Commit B 被撤销。
+; 任何对 file1.txt 的未提交修改都会被删除，无法找回。
+ 总结：--hard 就像是撤销提交并完全擦掉了你的草稿，无论暂存还是未暂存的内容都会被丢掉。
+ 对比 --soft、--mixed 和 --hard：
+; --soft：只重置 HEAD，暂存区和工作区不变。
+; --mixed（默认）：重置 HEAD 和暂存区，工作区不变。
+; --hard：重置 HEAD、暂存区和工作区，所有未提交的更改都会被丢弃。
+撤销修改
+; 系统环境windows 11
+
+; git 版本2.44.0
+
+; 丢弃工作区更改的命令如下：
+
+; git restore <file>
+
+; 撤销暂存区提交的命令如下：
+
+; git restore --staged <file> = git reset HEAD <file>
+
+版本回退
+
+现在总结一下：
+
+; HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset --hard commit_id。
+; 穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
+; 要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。
+
+
+vim编辑退出：":wq"
+
+指定版本恢复文件： 假设你想从 Commit A（哈希值 d4e5f6a）恢复文件 file1.txt，你可以这样做：
+; git checkout/restore d4e5f6a -- file1.txt  通过git log获悉哈希值
+; git checkout/restore head d4e5f6a --file1.txt
+; !!!HEAD 不是必须的，但它是常用的默认值。
+; 其实，在 git restore 命令中，如果你省略了 HEAD，Git 默认会将文件恢复到 HEAD 所指向的当前最新提交的状态。
+恢复不同版本的文件
+1)如何使用 git restore 恢复不同版本的文件：
+HEAD~1：恢复文件到上一个提交的版本（HEAD 的前一个版本）。
+; git restore HEAD~1 -- <file>
+
+特定分支：你也可以从其他分支恢复文件。比如从 feature-branch 中恢复文件：
+; git restore feature-branch -- <file>
+
+特定标签：从标签中恢复文件，假设你有个标签 v1.0：
+; git restore v1.0 -- <file>
+结论：
+; 通过 git restore <commit_hash> -- <file>，你可以从指定的提交版本中恢复特定的文件内容，而不影响当前工作区的其他文件。
+
+2)其他分支
+如果你想从其他分支恢复某个提交哈希值对应的文件，你可以通过以下方式操作：
+步骤：
+查看提交哈希值： 首先，找到你想要的哈希值（可以使用 git log 命令查看）。假设你要从分支 feature-branch 的某个提交哈希中恢复文件。
+
+可以切换到 feature-branch，或者直接在当前分支查看它的历史：
+; git log feature-branch
+从其他分支的哈希恢复文件： 使用 git restore 命令指定分支和哈希值来恢复文件：
+; git restore <branch_name> <commit_hash> -- <file>
+; 示例: git restore feature-branch d4e5f6a -- file1.txt
+<branch_name> 是包含该文件的分支名（例如 feature-branch）。
+<commit_hash> 是你想恢复的那个提交的哈希值。
+<file> 是你要恢复的文件名。
+
+
